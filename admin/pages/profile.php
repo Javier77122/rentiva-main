@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get recent activity
-$activity_query = "SELECT * FROM admin_activity_log WHERE admin_id = ? ORDER BY created_at DESC LIMIT 10";
+$activity_query = "SELECT admin_id, action, table_name as description, created_at FROM admin_activity_log WHERE admin_id = ? ORDER BY created_at DESC LIMIT 10";
 $activity_stmt = $db->prepare($activity_query);
 $activity_stmt->execute([$_SESSION['admin_id']]);
 $recent_activities = $activity_stmt->fetchAll();
@@ -303,7 +303,7 @@ $recent_activities = $activity_stmt->fetchAll();
                 <h3><?php echo htmlspecialchars($current_admin['full_name']); ?></h3>
                 <p><?php echo htmlspecialchars($current_admin['email']); ?></p>
                 <p>Role: <?php echo ucfirst($current_admin['role']); ?></p>
-                <p>Bergabung: <?php echo $current_admin['created_at'] ? date('d M Y', strtotime($current_admin['created_at'])) : 'Tidak diketahui'; ?></p>
+                <p>Bergabung: <?php echo isset($current_admin['created_at']) && $current_admin['created_at'] ? date('d M Y', strtotime($current_admin['created_at'])) : 'Tidak diketahui'; ?></p>
             </div>
         </div>
 
@@ -369,7 +369,7 @@ $recent_activities = $activity_stmt->fetchAll();
         // Get activity stats
         $total_activities = count($recent_activities);
         $today_activities = count(array_filter($recent_activities, function($a) {
-            return $a['created_at'] && date('Y-m-d', strtotime($a['created_at'])) === date('Y-m-d');
+            return isset($a['created_at']) && $a['created_at'] && date('Y-m-d', strtotime($a['created_at'])) === date('Y-m-d');
         }));
         ?>
 
@@ -413,8 +413,8 @@ $recent_activities = $activity_stmt->fetchAll();
                             <i class="<?php echo $icon; ?>"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-title"><?php echo htmlspecialchars($activity['description']); ?></div>
-                            <div class="activity-time"><?php echo $activity['created_at'] ? date('d M Y, H:i', strtotime($activity['created_at'])) : 'Tidak diketahui'; ?></div>
+                            <div class="activity-title"><?php echo htmlspecialchars($activity['description'] ?? 'Unknown activity', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="activity-time"><?php echo isset($activity['created_at']) && $activity['created_at'] ? date('d M Y, H:i', strtotime($activity['created_at'])) : 'Tidak diketahui'; ?></div>
                         </div>
                     </div>
                 <?php endforeach; ?>
